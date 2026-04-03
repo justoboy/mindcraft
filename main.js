@@ -74,6 +74,7 @@ if (process.env.SETTINGS_JSON) {
 Mindcraft.init(false, settings.mindserver_port, settings.auto_open_ui);
 
 for (let profile of settings.profiles) {
+	console.log("Loading ", profile);
     const profile_json = JSON.parse(readFileSync(profile, 'utf8'));
     settings.profile = profile_json;
     Mindcraft.createAgent(settings);

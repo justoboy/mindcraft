@@ -1,6 +1,6 @@
 {
     "name": "andy",
-
-    "model": "gpt-5.4-mini"
-
+    "model": "ollama/sweaterdog/andy-4:latest",
+    "embedding": "ollama",
+	"code_model": "ollama/qwen3-coder:30b-a3b-q4_K_M"
 }
