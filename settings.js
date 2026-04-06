@@ -1,7 +1,7 @@
 const settings = {
     "minecraft_version": "1.21.6", // or specific version like "1.21.6"
     "host": "127.0.0.1", // or "localhost", "your.ip.address.here"
-    "port": 55916, // set to -1 to automatically scan for open ports
+    "port": -1, // set to -1 to automatically scan for open port
     "auth": "offline", // or "microsoft"
 
     // the mindserver manages all agents and hosts the UI
@@ -31,7 +31,7 @@ const settings = {
         // individual profiles override values from the base profile
     ],
 
-    "load_memory": true, // load memory from previous session
+    "load_memory": false, // load memory from previous session
     "init_message": "Respond with hello world and your name", // sends to all on spawn
     "only_chat_with": [], // users that the bots listen to and send general messages to. if empty it will chat publicly
 
