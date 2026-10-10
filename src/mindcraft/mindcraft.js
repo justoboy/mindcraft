@@ -47,6 +47,7 @@ export async function init(host_public=false, port=8080, auto_open_ui=true) {
             // check if browser listener is already open
             if (numStateListeners() === 0) {
                 const url = new URL(mindServerClientUrl(mindserver_port, host_public));
+                // Note: Viewer port starts at 3001 (not 3000) due to Django server on port 3000
                 const token = resolveControlToken(host_public);
                 if (token) url.searchParams.set('token', token);
                 void open(url.href).catch(() => {
@@ -68,7 +69,7 @@ export async function createAgent(settings) {
     settings = JSON.parse(JSON.stringify(settings));
     let agent_name = settings.profile.name;
     const agentIndex = agent_count++;
-    const viewer_port = 3000 + agentIndex;
+    const viewer_port = 3001 + agentIndex;
     const process_token = randomBytes(32).toString('hex');
     registerAgent(settings, viewer_port, process_token);
     let load_memory = settings.load_memory || false;
