@@ -4,7 +4,62 @@ This document lists all available commands, actions, and queries that the bot ha
 
 ## Table of Contents
 - [Queries (Information-Only)](#queries-information-only)
+  - [!stats](#stats)
+  - [!inventory](#inventory)
+  - [!nearbyBlocks](#nearbyblocks)
+  - [!craftable](#craftable)
+  - [!entities](#entities)
+  - [!modes](#modes)
+  - [!savedPlaces](#savedplaces)
+  - [!checkBlueprintLevel](#checkblueprintlevel)
+  - [!checkBlueprint](#checkblueprint)
+  - [!getBlueprint](#getblueprint)
+  - [!getBlueprintLevel](#getblueprintlevel)
+  - [!getCraftingPlan](#getcraftingplan)
+  - [!searchWiki](#searchwiki)
+  - [!help](#help)
+  - [!searchForBlock](#searchforblock)
+  - [!searchForEntity](#searchforentity)
+  - [!viewChest](#viewchest)
+  - [!showVillagerTrades](#showvillagertrades)
 - [Actions (World-Modifying)](#actions-world-modifying)
+  - [!newAction](#newaction)
+  - [!stop](#stop)
+  - [!stfu](#stfu)
+  - [!restart](#restart)
+  - [!clearChat](#clearchat)
+  - [!goToPlayer](#gotoplayer)
+  - [!followPlayer](#followplayer)
+  - [!goToCoordinates](#gotocoordinates)
+  - [!moveAway](#moveaway)
+  - [!rememberHere](#rememberhere)
+  - [!goToRememberedPlace](#gotorememberedplace)
+  - [!givePlayer](#giveplayer)
+  - [!consume](#consume)
+  - [!equip](#equip)
+  - [!putInChest](#putinchest)
+  - [!takeFromChest](#takefromchest)
+  - [!discard](#discard)
+  - [!collectBlocks](#collectblocks)
+  - [!craftRecipe](#craftrecipe)
+  - [!smeltItem](#smeltitem)
+  - [!clearFurnace](#clearfurnace)
+  - [!placeHere](#placehere)
+  - [!attack](#attack)
+  - [!attackPlayer](#attackplayer)
+  - [!goToBed](#gotobed)
+  - [!stay](#stay)
+  - [!setMode](#setmode)
+  - [!goal](#goal)
+  - [!endGoal](#endgoal)
+  - [!tradeWithVillager](#tradewithvillager)
+  - [!startConversation](#startconversation)
+  - [!endConversation](#endconversation)
+  - [!lookAtPlayer](#lookatplayer)
+  - [!lookAtPosition](#lookatposition)
+  - [!digDown](#digdown)
+  - [!goToSurface](#gotosurface)
+  - [!useOn](#useon)
 
 ---
 
@@ -134,6 +189,31 @@ Lists all available commands and their descriptions.
 **Returns:**
 - Complete list of commands with descriptions and parameters
 
+### !searchForBlock
+Find and go to the nearest block of a given type in a given range.
+
+**Parameters:**
+- `type` (BlockName): The block type to go to.
+- `search_range` (float): The range to search for the block (9-511).
+
+### !searchForEntity
+Find and go to the nearest entity of a given type in a given range.
+
+**Parameters:**
+- `type` (string): The type of entity to go to.
+- `search_range` (float): The range to search for the entity (9-511).
+
+### !viewChest
+View the items/counts of the nearest chest.
+
+**Returns:** Chest contents
+
+### !showVillagerTrades
+Show trades of a specified villager.
+
+**Parameters:**
+- `id` (int): The id number of the villager that you want to trade with.
+
 ---
 
 ## Actions (World-Modifying)
@@ -191,20 +271,6 @@ Go to the given x, y, z location.
 - `z` (float): The z coordinate.
 - `closeness` (float): How close to get to the location.
 
-### !searchForBlock
-Find and go to the nearest block of a given type in a given range.
-
-**Parameters:**
-- `type` (BlockName): The block type to go to.
-- `search_range` (float): The range to search for the block (minimum 32).
-
-### !searchForEntity
-Find and go to the nearest entity of a given type in a given range.
-
-**Parameters:**
-- `type` (string): The type of entity to go to.
-- `search_range` (float): The range to search for the entity (32-512).
-
 ### !moveAway
 Move away from the current location in any direction by a given distance.
 
@@ -260,11 +326,6 @@ Take the given items from the nearest chest.
 **Parameters:**
 - `item_name` (ItemName): The name of the item to take.
 - `num` (int): The number of items to take.
-
-### !viewChest
-View the items/counts of the nearest chest.
-
-**Returns:** Chest contents
 
 ### !discard
 Discard the given item from the inventory.
@@ -355,12 +416,6 @@ Set a goal prompt to endlessly work towards with continuous self-prompting.
 Call when you have accomplished your goal. It will stop self-prompting and the current action.
 
 **Returns:** "Self-prompting stopped."
-
-### !showVillagerTrades
-Show trades of a specified villager.
-
-**Parameters:**
-- `id` (int): The id number of the villager that you want to trade with.
 
 ### !tradeWithVillager
 Trade with a specified villager.
