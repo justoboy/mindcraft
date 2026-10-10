@@ -1,0 +1,9 @@
+{
+    "name": "AndyQ",
+    "model": {
+        "api": "ollama",
+        "model": "qwen3-coder-next:latest",
+        "url": "http://10.0.0.184:11434"
+    },
+    "embedding": "ollama"
+}

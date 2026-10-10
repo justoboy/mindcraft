@@ -1,0 +1,9 @@
+{
+    "name": "AndyG",
+    "model": {
+        "api": "ollama",
+        "model": "gpt-oss:120b",
+        "url": "http://10.0.0.184:11434"
+    },
+    "embedding": "ollama"
+}
