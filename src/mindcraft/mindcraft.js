@@ -72,7 +72,7 @@ export async function createAgent(settings) {
     const viewer_port = 3001 + agentIndex;
     const process_token = randomBytes(32).toString('hex');
     registerAgent(settings, viewer_port, process_token);
-    let load_memory = settings.load_memory || false;
+    let memory_name = settings.memory_name || null;
     let init_message = settings.init_message || null;
 
     try {
@@ -90,7 +90,7 @@ export async function createAgent(settings) {
         }
 
         const agentProcess = new AgentProcess(agent_name, mindserver_port, process_token);
-        agentProcess.start(load_memory, init_message, agentIndex);
+        agentProcess.start(memory_name, init_message, agentIndex);
         agent_processes[settings.profile.name] = agentProcess;
     } catch (error) {
         console.error(`Error creating agent ${agent_name}:`, error);

@@ -31,7 +31,7 @@ const settings = {
         // individual profiles override values from the base profile
     ],
 
-    "load_memory": true, // load memory from previous session
+    "memory_name": "global", // named memory bucket to load/save (e.g. a world name); null disables memory entirely
     "init_message": "Respond with hello world and your name", // sends to all on spawn
     "only_chat_with": [], // users that the bots listen to and send general messages to. if empty it will chat publicly
 

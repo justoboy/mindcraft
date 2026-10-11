@@ -1,16 +1,38 @@
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
+import path from 'path';
 import { NPCData } from './npc/data.js';
 import settings from './settings.js';
 
+/**
+ * Sanitize a user-supplied memory bucket name so it is safe to use as a single
+ * filesystem path segment. Strips path separators and other characters that are
+ * invalid or dangerous in a Windows/POSIX filename, collapses the result, and
+ * guards against empty / '.' / '..' (path traversal) values.
+ */
+export function sanitizeMemoryName(raw) {
+    if (typeof raw !== 'string') return null;
+    // Strip anything that isn't a word char, dash, or dot. This removes '/',
+    // '\', ':', and control chars, which neutralizes path traversal and invalid
+    // filename characters on both Windows and POSIX.
+    let cleaned = raw.replace(/[^A-Za-z0-9._-]/g, '').replace(/^\.+/, '');
+    if (cleaned === '' || cleaned === '.' || cleaned === '..') return null;
+    return cleaned;
+}
 
 export class History {
     constructor(agent) {
         this.agent = agent;
         this.name = agent.name;
-        this.memory_fp = `./bots/${this.name}/memory.json`;
+        // Memory is isolated per agent (by agent name) and scoped by the
+        // (sanitized) memory bucket, so two agents never share or clobber one
+        // file. A null bucket means memory is disabled for this agent.
+        const bucket = sanitizeMemoryName(agent.memory_name);
+        this.memory_name = bucket;
+        this.enabled = bucket !== null;
+        this.memory_fp = path.join('bots', this.name, bucket || 'default', 'memory.json');
         this.full_history_fp = undefined;
 
-        mkdirSync(`./bots/${this.name}/histories`, { recursive: true });
+        mkdirSync(path.join('bots', this.name, bucket || 'default', 'histories'), { recursive: true });
 
         this.turns = [];
 
@@ -43,9 +65,11 @@ export class History {
     }
 
     async appendFullHistory(to_store) {
+        if (!this.enabled) return;
         if (this.full_history_fp === undefined) {
             const string_timestamp = new Date().toLocaleString().replace(/[/:]/g, '-').replace(/ /g, '').replace(/,/g, '_');
-            this.full_history_fp = `./bots/${this.name}/histories/${string_timestamp}.json`;
+            this.full_history_fp = path.join(path.dirname(this.memory_fp), 'histories', `${string_timestamp}.json`);
+            mkdirSync(path.dirname(this.full_history_fp), { recursive: true });
             writeFileSync(this.full_history_fp, '[]', 'utf8');
         }
         try {
@@ -80,6 +104,7 @@ export class History {
     }
 
     async save() {
+        if (!this.enabled) return;
         try {
             const data = {
                 memory: this.memory,
@@ -98,6 +123,7 @@ export class History {
     }
 
     load() {
+        if (!this.enabled) return null;
         try {
             if (!existsSync(this.memory_fp)) {
                 console.log('No memory file found.');
