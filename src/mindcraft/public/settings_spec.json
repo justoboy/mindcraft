@@ -31,10 +31,10 @@
         "default": "survival",
         "options": ["survival", "assistant", "creative", "god_mode"]
     },
-    "load_memory": {
-        "type": "boolean",
-        "description": "Whether to load bot's previous memory",
-        "default": false
+    "memory_name": {
+        "type": "string",
+        "description": "Named memory bucket to load/save (e.g. a world name). Leave empty to disable memory entirely.",
+        "default": "global"
     },
     "init_message": {
         "type": "string",

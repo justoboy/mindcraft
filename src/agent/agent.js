@@ -1,4 +1,4 @@
-import { History } from './history.js';
+import { History, sanitizeMemoryName } from './history.js';
 import { Coder } from './coder.js';
 import { VisionInterpreter } from './vision/vision_interpreter.js';
 import { Prompter } from '../models/prompter.js';
@@ -19,7 +19,7 @@ import { speak } from './speak.js';
 import { log, validateNameFormat, handleDisconnection } from './connection_handler.js';
 
 export class Agent {
-    async start(load_mem=false, init_message=null, count_id=0) {
+    async start(memory_name=null, init_message=null, count_id=0) {
         this.last_sender = null;
         this.count_id = count_id;
         this._disconnectHandled = false;
@@ -38,7 +38,10 @@ export class Agent {
             process.exit(1);
             return;
         }
-        
+
+        // memory_name selects which memory bucket this agent loads/saves. A null
+        // (or invalid) value disables memory entirely for this agent.
+        this.memory_name = sanitizeMemoryName(memory_name);
         this.history = new History(this);
         this.coder = new Coder(this);
         this.npc = new NPCContoller(this);
@@ -49,7 +52,7 @@ export class Agent {
 
         // load mem first before doing task
         let save_data = null;
-        if (load_mem) {
+        if (this.history.enabled) {
             save_data = this.history.load();
         }
         let taskStart = null;
@@ -122,7 +125,7 @@ export class Agent {
                 this._setupEventHandlers(save_data, init_message);
                 this.startEvents();
               
-                if (!load_mem) {
+                if (!this.history.enabled) {
                     if (settings.task) {
                         this.task.initBotTask();
                         this.task.setAgentGoal();

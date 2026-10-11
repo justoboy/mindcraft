@@ -10,15 +10,16 @@ export class AgentProcess {
         this.port = port;
     }
 
-    start(load_memory=false, init_message=null, count_id=0) {
+    start(memory_name=null, init_message=null, count_id=0) {
         this.count_id = count_id;
+        this.memory_name = memory_name;
         this.running = true;
 
         let args = [init_agent_path, this.name];
         args.push('-n', this.name);
         args.push('-c', count_id);
-        if (load_memory)
-            args.push('-l', load_memory);
+        if (memory_name)
+            args.push('-l', memory_name);
         if (init_message)
             args.push('-m', init_message);
         args.push('-p', this.port);
@@ -46,7 +47,7 @@ export class AgentProcess {
                     return;
                 }
                 console.log('Restarting agent...');
-                this.start(true, 'Agent process restarted.', count_id, this.port);
+                this.start(this.memory_name, 'Agent process restarted.', count_id);
                 last_restart = Date.now();
             }
         });
@@ -74,11 +75,11 @@ export class AgentProcess {
             this.process.once('exit', () => {
                  clearTimeout(restartTimeout);
                  console.log(`Stopped hanging agent ${this.name}. Now restarting.`);
-                 this.start(true, 'Agent process restarted.', this.count_id);
+                 this.start(this.memory_name, 'Agent process restarted.', this.count_id);
             });
             this.stop(); // sends SIGINT
         } else {
-             this.start(true, 'Agent process restarted.', this.count_id);
+             this.start(this.memory_name, 'Agent process restarted.', this.count_id);
         }
     }
 }

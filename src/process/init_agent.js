@@ -4,7 +4,7 @@ import yargs from 'yargs';
 
 const args = process.argv.slice(2);
 if (args.length < 1) {
-    console.log('Usage: node init_agent.js -n <agent_name> -p <port> -l <load_memory> -m <init_message> -c <count_id>');
+    console.log('Usage: node init_agent.js -n <agent_name> -p <port> -l <memory_name> -m <init_message> -c <count_id>');
     process.exit(1);
 }
 
@@ -14,10 +14,10 @@ const argv = yargs(args)
         type: 'string',
         description: 'name of agent'
     })
-    .option('load_memory', {
+    .option('memory_name', {
         alias: 'l',
-        type: 'boolean',
-        description: 'load agent memory from file on startup'
+        type: 'string',
+        description: 'name of the memory bucket to load/save; omit to disable memory'
     })
     .option('init_message', {
         alias: 'm',
@@ -44,7 +44,7 @@ const argv = yargs(args)
         console.log('Starting agent');
         const agent = new Agent();
         serverProxy.setAgent(agent);
-        await agent.start(argv.load_memory, argv.init_message, argv.count_id);
+        await agent.start(argv.memory_name, argv.init_message, argv.count_id);
     } catch (error) {
         console.error('Failed to start agent process:');
         console.error(error.message);
