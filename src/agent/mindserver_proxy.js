@@ -2,6 +2,8 @@ import { io } from 'socket.io-client';
 import { setSettings } from './settings.js';
 import rootSettings from '../../settings.js';
 import { mindServerClientUrl } from '../mindcraft/security.js';
+import convoManager from './conversation.js';
+import { getFullState } from './library/full_state.js';
 
 // agent's individual connection to the mindserver
 // connect to the configured local MindServer address
@@ -15,8 +17,6 @@ class MindServerProxy {
         this.socket = null;
         this.connected = false;
         this.agents = [];
-        this.convoManager = null;
-        this.getFullState = null;
         MindServerProxy.instance = this;
     }
 
@@ -37,10 +37,10 @@ class MindServerProxy {
             this.socket.once('connect_error', reject);
         });
 
-        // Load this process's per-agent settings before importing the Agent
-        // runtime. Several runtime modules snapshot settings during module
-        // evaluation, so importing them before this handshake can freeze the
-        // root/default values instead of the settings for this agent.
+        // Populate this process's settings singleton with the per-agent settings
+        // from the MindServer. Consumers read from the shared mutable object at
+        // call time (e.g. mcdata.initBot re-reads settings.minecraft_version),
+        // so a static import graph is safe here.
         const response = await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 reject(new Error('Settings request timed out after 5 seconds'));
@@ -58,16 +58,6 @@ class MindServerProxy {
 
         setSettings(response.settings);
         Object.assign(rootSettings, response.settings);
-
-        // conversation.js and full_state.js pull in commands/skills/mcdata. Delay
-        // both import chains until after the settings handshake has populated
-        // the child-process settings objects.
-        const [{ default: convoManager }, { getFullState }] = await Promise.all([
-            import('./conversation.js'),
-            import('./library/full_state.js'),
-        ]);
-        this.convoManager = convoManager;
-        this.getFullState = getFullState;
 
         this._registerSocketHandlers();
         this.connected = true;
@@ -90,12 +80,12 @@ class MindServerProxy {
         });
 
         this.socket.on('chat-message', (agentName, json) => {
-            this.convoManager.receiveFromBot(agentName, json);
+            convoManager.receiveFromBot(agentName, json);
         });
 
         this.socket.on('agents-status', (agents) => {
             this.agents = agents;
-            this.convoManager.updateAgents(agents);
+            convoManager.updateAgents(agents);
             if (this.agent?.task) {
                 console.log(this.agent.name, 'updating available agents');
                 this.agent.task.updateAvailableAgents(agents);
@@ -117,11 +107,11 @@ class MindServerProxy {
 
         this.socket.on('get-full-state', (callback) => {
             try {
-                if (!this.agent || !this.getFullState) {
+                if (!this.agent) {
                     callback(null);
                     return;
                 }
-                const state = this.getFullState(this.agent);
+                const state = getFullState(this.agent);
                 callback(state);
             } catch (error) {
                 console.error('Error getting full state:', error);
