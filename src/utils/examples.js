@@ -9,11 +9,25 @@ export class Examples {
         this.embeddings = {};
     }
 
+    // Extracts command tokens (e.g. "!craftRecipe") from a turn's content so the
+    // command intent is part of the retrieval key. Assistant turns carry the
+    // strongest signal about which command is relevant, so they must not be dropped.
+    extractCommands(content) {
+        const matches = content.match(/!\w+/g);
+        return matches ? matches.join(' ') : '';
+    }
+
     turnsToText(turns) {
         let messages = '';
         for (let turn of turns) {
-            if (turn.role !== 'assistant')
-                messages += turn.content.substring(turn.content.indexOf(':')+1).trim() + '\n';
+            if (turn.role === 'assistant') {
+                // Include the command intent from the bot's own prior turns.
+                const cmds = this.extractCommands(turn.content);
+                if (cmds)
+                    messages += cmds + '\n';
+                continue;
+            }
+            messages += turn.content.substring(turn.content.indexOf(':')+1).trim() + '\n';
         }
         return messages.trim();
     }
@@ -61,6 +75,10 @@ export class Examples {
             );
         }
         else {
+            if (!this._warned_word_overlap) {
+                console.warn('Examples: using weak word-overlap fallback for retrieval (no embedding model available).');
+                this._warned_word_overlap = true;
+            }
             this.examples.sort((a, b) => 
                 wordOverlapScore(turn_text, this.turnsToText(b)) -
                 wordOverlapScore(turn_text, this.turnsToText(a))

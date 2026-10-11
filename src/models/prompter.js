@@ -4,6 +4,7 @@ import { getCommandDocs } from '../agent/commands/index.js';
 import { SkillLibrary } from "../agent/library/skill_library.js";
 import { stringifyTurns } from '../utils/text.js';
 import { getCommand } from '../agent/commands/index.js';
+import { getNearbyPlayers } from '../agent/library/world.js';
 import settings from '../agent/settings.js';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -105,6 +106,33 @@ export class Prompter {
         return this.profile.name;
     }
 
+    // Resolves the $PLAYER placeholder in examples to a real human player on the
+    // server (nearest by distance), so examples don't teach fake usernames.
+    _examplePlayerName() {
+        try {
+            const players = getNearbyPlayers(this.agent.bot, 64);
+            if (players && players.length > 0)
+                return players[0].username;
+        } catch (e) {
+            console.warn('Could not resolve $PLAYER example placeholder:', e.message);
+        }
+        return 'player';
+    }
+
+    // Resolves the $OTHER_BOT placeholder to a real co-agent name (not self),
+    // so multi-bot examples reference an actual other agent.
+    _exampleOtherBotName() {
+        try {
+            const names = this.agent.task?.agent_names || [];
+            const other = names.find(n => n !== this.agent.name);
+            if (other)
+                return other;
+        } catch (e) {
+            console.warn('Could not resolve $OTHER_BOT example placeholder:', e.message);
+        }
+        return 'other_bot';
+    }
+
     getInitModes() {
         return this.profile.modes;
     }
@@ -164,6 +192,10 @@ export class Prompter {
         }
         if (prompt.includes('$EXAMPLES') && examples !== null)
             prompt = prompt.replaceAll('$EXAMPLES', await examples.createExampleMessage(messages));
+        if (prompt.includes('$PLAYER'))
+            prompt = prompt.replaceAll('$PLAYER', this._examplePlayerName());
+        if (prompt.includes('$OTHER_BOT'))
+            prompt = prompt.replaceAll('$OTHER_BOT', this._exampleOtherBotName());
         if (prompt.includes('$MEMORY'))
             prompt = prompt.replaceAll('$MEMORY', this.agent.history.memory);
         if (prompt.includes('$TO_SUMMARIZE'))

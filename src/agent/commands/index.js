@@ -43,6 +43,54 @@ export function commandExists(commandName) {
 }
 
 /**
+ * Levenshtein edit distance between two strings (case-insensitive comparison).
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+function editDistance(a, b) {
+    a = a.toLowerCase();
+    b = b.toLowerCase();
+    const m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+        const curr = [i];
+        for (let j = 1; j <= n; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+        }
+        prev = curr;
+    }
+    return prev[n];
+}
+
+/**
+ * Suggests the closest existing command to a (likely hallucinated) command name,
+ * using edit distance. Returns null if nothing is close enough to be useful.
+ * @param {string} commandName - the unknown command, with or without leading "!"
+ * @returns {string|null} the suggested command name (with "!") or null
+ */
+export function suggestCommand(commandName) {
+    const raw = commandName.startsWith("!") ? commandName.slice(1) : commandName;
+    let best = null;
+    let bestDist = Infinity;
+    for (let name of Object.keys(commandMap)) {
+        const dist = editDistance(raw, name.slice(1));
+        if (dist < bestDist) {
+            bestDist = dist;
+            best = name;
+        }
+    }
+    // Only suggest if reasonably close to the intended command.
+    const threshold = Math.max(2, Math.floor(raw.length / 2));
+    if (best && bestDist <= threshold)
+        return best;
+    return null;
+}
+
+/**
  * Converts a string into a boolean.
  * @param {string} input
  * @returns {boolean | null} the boolean or `null` if it could not be parsed.
@@ -105,13 +153,18 @@ export function parseCommandMessage(message) {
     else args = [];
 
     const command = getCommand(commandName);
-    if(!command) return `${commandName} is not a command.`
+    if(!command) {
+        const suggestion = suggestCommand(commandName);
+        return suggestion
+            ? `${commandName} is not a command. Did you mean ${suggestion}?`
+            : `${commandName} is not a command.`;
+    }
 
     const params = commandParams(command);
     const paramNames = commandParamNames(command);
-    
+
     if (args.length !== params.length)
-        return `Command ${command.name} was given ${args.length} args, but requires ${params.length} args.`;
+        return `Command ${command.name} was given ${args.length} args, but requires ${params.length} args. Correct usage: ${commandSignature(command)}.`;
 
     
     for (let i = 0; i < args.length; i++) {
@@ -203,6 +256,28 @@ function commandParamNames(command) {
     if (!command.params)
         return [];
     return Object.keys(command.params);
+}
+
+/**
+ * Builds a correct-usage example string for a command, e.g.
+ * `!collectBlocks("BlockOrItemName", number)`. Used to give the model a concrete
+ * signature in error feedback so it can self-correct.
+ * @param {Object} command
+ * @returns {string}
+ */
+function commandSignature(command) {
+    const paramNames = commandParamNames(command);
+    if (paramNames.length === 0)
+        return command.name;
+    const placeholders = paramNames.map((name) => {
+        const type = command.params[name].type;
+        if (type === 'int' || type === 'float')
+            return 'number';
+        if (type === 'boolean')
+            return 'true|false';
+        return `"${name}"`;
+    });
+    return `${command.name}(${placeholders.join(', ')})`;
 }
 
 function numParams(command) {
